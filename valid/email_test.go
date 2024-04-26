@@ -60,5 +60,3 @@ func TestIsTooLong(t *testing.T) {
 		}
 	}
 }
-
-// Add tests for the remaining functions...
