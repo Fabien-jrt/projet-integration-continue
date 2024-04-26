@@ -1,10 +1,15 @@
 package valid
 
-import "strings"
+import (
+	"io"
+	"net/http"
+	"strings"
+)
 
 const maxCharAfterAt = 255
 const maxCharBeforeAt = 64
 const maxTotalChar = maxCharAfterAt + maxCharBeforeAt
+const allowedCharacters = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789-"
 
 func IsEmailValid(email string) bool {
 	if isTooLong(email) {
@@ -14,7 +19,12 @@ func IsEmailValid(email string) bool {
 		hasValidExtention(email) &&
 		hasValidDomain(email) &&
 		hasValidLengthBeforeAt(email) &&
-		hasValidLengthAfterAt(email)
+		hasValidLengthAfterAt(email) &&
+		hasNoSpace(email) &&
+		hasSomethingBeforeAt(email) &&
+		hasSomethingAfterAt(email) &&
+		hasSomethingAfterExt(email) &&
+		!hasAdjacentDots(email)
 }
 
 func isTooLong(email string) bool {
@@ -35,12 +45,30 @@ func hasValidExtention(email string) bool {
 	// check if the email has a valid extension
 	parts := strings.Split(email, ".")
 	extension := parts[len(parts)-1]
-	validExtensions := []string{"com", "net", "org"} // add more valid extensions if needed
-	for _, ext := range validExtensions {
-		if strings.ToLower(extension) == ext {
-			return true
-		}
+
+	// fetch the list of valid extensions from the URL
+	resp, err := http.Get("https://data.iana.org/TLD/tlds-alpha-by-domain.txt")
+	if err != nil {
+		// handle error
+		return false
 	}
+	defer resp.Body.Close()
+
+	// read the response body
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		// handle error
+		return false
+	}
+
+	// convert the response body to a string
+	extensions := strings.ToLower(string(body))
+
+	// check if the extension is in the list of valid extensions
+	if strings.Contains(extensions, strings.ToLower(extension)) {
+		return true
+	}
+
 	return false
 }
 
@@ -52,12 +80,24 @@ func hasValidDomain(email string) bool {
 	parts = strings.Split(domain, ".")
 	domain = parts[len(parts)-1]
 
-	validDomains := []string{"gmail", "yahoo", "hotmail"} // add more valid domains if needed
-	for _, dom := range validDomains {
-		if strings.ToLower(domain) == dom {
+	// check for forbidden characters in the domain name
+	for _, char := range domain {
+		if !isValidDomainCharacter(char) {
+			return false
+		}
+	}
+
+	return true
+}
+
+func isValidDomainCharacter(char rune) bool {
+	// check if the character is in the allowed set
+	for _, allowedChar := range allowedCharacters {
+		if char == allowedChar {
 			return true
 		}
 	}
+
 	return false
 }
 
@@ -83,4 +123,40 @@ func hasValidLengthAfterAt(email string) bool {
 		return false
 	}
 	return true
+}
+
+func hasNoSpace(email string) bool {
+	// check if the email has any spaces
+	return !strings.Contains(email, " ")
+}
+
+func hasSomethingBeforeAt(email string) bool {
+	// check if there is something before the @ sign
+	parts := strings.Split(email, "@")
+	beforeAt := parts[0]
+	return len(beforeAt) > 0
+}
+
+func hasSomethingAfterAt(email string) bool {
+	// check if there is something after the @ sign
+	parts := strings.Split(email, "@")
+	afterAt := parts[1]
+	return len(afterAt) > 0
+}
+
+func hasSomethingAfterExt(email string) bool {
+	// check if there is something after the . in the extension
+	parts := strings.Split(email, ".")
+	extension := parts[len(parts)-1]
+	return len(extension) > 0
+}
+
+func hasAdjacentDots(email string) bool {
+	// check if the email has adjacent dots
+	for i := 0; i < len(email)-1; i++ {
+		if email[i] == '.' && email[i+1] == '.' {
+			return true
+		}
+	}
+	return false
 }
