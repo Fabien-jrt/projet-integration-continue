@@ -2,8 +2,23 @@ package valid
 
 import "strings"
 
+const maxCharAfterAt = 255
+const maxCharBeforeAt = 64
+const maxTotalChar = maxCharAfterAt + maxCharBeforeAt
+
 func IsEmailValid(email string) bool {
-	return false
+	if isTooLong(email) {
+		return false
+	}
+	return hasAtSign(email) &&
+		hasValidExtention(email) &&
+		hasValidDomain(email) &&
+		hasValidLengthBeforeAt(email) &&
+		hasValidLengthAfterAt(email)
+}
+
+func isTooLong(email string) bool {
+	return len(email) > maxTotalChar
 }
 
 func hasAtSign(email string) bool {
