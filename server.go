@@ -1,6 +1,8 @@
 package main
 
 import (
+	"fmt"
+	"ic/valid"
 	"io"
 	"net/http"
 	"text/template"
@@ -9,8 +11,10 @@ import (
 )
 
 type User struct {
-	Name  string `json:"name" xml:"name" form:"name" query:"name"`
-	Email string `json:"email" xml:"email" form:"email" query:"email"`
+	Name     string `json:"name" xml:"name" form:"name" query:"name"`
+	Email    string `json:"email" xml:"email" form:"email" query:"email"`
+	Phone    string `json:"phone" xml:"phone" form:"phone" query:"phone"`
+	Birthday string `json:"birthday" xml:"birthday" form:"birthday" query:"birthday"`
 }
 
 // TemplateRenderer ...
@@ -35,16 +39,14 @@ func main() {
 	e.GET("/", func(c echo.Context) error {
 		return c.Render(http.StatusOK, "index.html", nil)
 	})
+
 	e.GET("/account", func(c echo.Context) error {
 		u := new(User)
 		return c.JSON(http.StatusCreated, u)
 	})
 
 	e.GET("/user", func(c echo.Context) error {
-		return c.HTML(http.StatusOK, `<h1>Create a new user!</h1>
-		<form>
-		
-		</form>`)
+		return c.Render(http.StatusOK, "form.html", nil)
 	})
 
 	e.POST("/user", func(c echo.Context) error {
@@ -52,6 +54,17 @@ func main() {
 		if err := c.Bind(u); err != nil {
 			return err
 		}
+		fmt.Println(u)
+		fmt.Println(u.Email)
+
+		if valid.IsEmpty(u.Email) || valid.IsEmpty(u.Name) {
+			return c.JSON(http.StatusConflict, u)
+		}
+
+		if !valid.IsEmailValid(u.Email) {
+			return c.JSON(http.StatusConflict, u)
+		}
+
 		return c.JSON(http.StatusCreated, u)
 	})
 
