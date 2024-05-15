@@ -11,10 +11,7 @@ import (
 )
 
 type User struct {
-	Name     string `json:"name" xml:"name" form:"name" query:"name"`
-	Email    string `json:"email" xml:"email" form:"email" query:"email"`
-	Phone    string `json:"phone" xml:"phone" form:"phone" query:"phone"`
-	Birthday string `json:"birthday" xml:"birthday" form:"birthday" query:"birthday"`
+	Email string `json:"email" xml:"email" form:"email" query:"email"`
 }
 
 // TemplateRenderer ...
@@ -57,7 +54,7 @@ func main() {
 		fmt.Println(u)
 		fmt.Println(u.Email)
 
-		if valid.IsEmpty(u.Email) || valid.IsEmpty(u.Name) {
+		if valid.IsEmpty(u.Email) {
 			return c.JSON(http.StatusConflict, u)
 		}
 
