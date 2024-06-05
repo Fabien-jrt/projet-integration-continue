@@ -19,7 +19,7 @@ jobs:
       - name: Set up Go
         uses: actions/setup-go@v2
         with:
-          go-version: 1.16
+          go-version: 1.21
 
       - name: Install dependencies
         run: go mod download
@@ -47,5 +47,6 @@ jobs:
 
       - name: Deploy Application
         run: |
+          echo "Deploying application..."
           scp -r ./public user@remote_server:/path/to/deploy
           ssh user@remote_server 'cd /path/to/deploy && ./restart_server.sh'
