@@ -1,6 +1,6 @@
 module ic
 
-go 1.21.3
+go 1.18
 
 require (
 	github.com/labstack/echo/v4 v4.12.0 // indirect
